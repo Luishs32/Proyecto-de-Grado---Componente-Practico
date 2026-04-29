@@ -8,6 +8,8 @@
  * RF5: Integrar datos históricos de ventas.
  */
 
+const DIAS_SEMANA = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+
 function renderInventario() {
   const tiendaId = App.tiendaActiva;
   const tienda   = TIENDAS.find(t => t.id === tiendaId);
@@ -64,6 +66,7 @@ function renderInventario() {
       </div>
     </div>
 
+    <!-- Modal actualizar inventario -->
     <div id="modal-inventario" class="modal-overlay hidden" onclick="cerrarModalInventarioFuera(event)">
       <div class="modal-box">
         <div class="modal-header">
@@ -73,19 +76,33 @@ function renderInventario() {
         <form id="form-inventario" onsubmit="guardarInventario(event)">
           <input type="hidden" id="inv-tienda-id" />
           <input type="hidden" id="inv-producto-id" />
+
           <div class="form-group">
             <label>Producto</label>
             <input type="text" id="inv-producto-nombre" readonly class="input-readonly" />
           </div>
+
           <div class="form-group">
             <label>Stock actual (unidades) *</label>
             <input type="number" id="inv-stock" required min="0" step="1" />
           </div>
+
           <div class="form-group">
-            <label>Ventas últimos 7 días — Lun, Mar, Mié, Jue, Vie, Sáb, Dom</label>
-            <input type="text" id="inv-ventas" placeholder="Ej: 18,20,15,22,19,17,21" />
-            <small class="form-hint">7 valores separados por coma</small>
+            <label>Ventas por día — últimos 7 días</label>
+            <div class="ventas-semana">
+              ${DIAS_SEMANA.map(d => `
+              <div class="venta-dia">
+                <span>${d}</span>
+                <input type="number" id="venta-${d.toLowerCase().replace('é','e')}"
+                       min="0" step="1" value="0"
+                       oninput="actualizarPromedioVentas()" />
+              </div>`).join('')}
+            </div>
+            <div class="venta-promedio" id="venta-promedio-display">
+              Promedio diario: <strong>0.0 uds/día</strong>
+            </div>
           </div>
+
           <div class="form-actions">
             <button type="button" class="btn-secondary" onclick="cerrarModalInventario()">Cancelar</button>
             <button type="submit" class="btn-primary" id="btn-guardar-inv">Guardar</button>
@@ -93,6 +110,16 @@ function renderInventario() {
         </form>
       </div>
     </div>`;
+}
+
+// IDs de los inputs de ventas (coinciden con los id= del HTML)
+const IDS_VENTA = ['lun', 'mar', 'mie', 'jue', 'vie', 'sab', 'dom'];
+
+function actualizarPromedioVentas() {
+  const valores = IDS_VENTA.map(id => parseInt(document.getElementById(`venta-${id}`)?.value) || 0);
+  const promedio = (valores.reduce((a, b) => a + b, 0) / 7).toFixed(1);
+  const el = document.getElementById('venta-promedio-display');
+  if (el) el.innerHTML = `Promedio diario: <strong>${promedio} uds/día</strong>`;
 }
 
 function editarInventario(tiendaId, productoId) {
@@ -104,7 +131,14 @@ function editarInventario(tiendaId, productoId) {
   document.getElementById('inv-producto-id').value     = productoId;
   document.getElementById('inv-producto-nombre').value = prod?.nombre ?? '';
   document.getElementById('inv-stock').value           = inv.stockActual;
-  document.getElementById('inv-ventas').value          = inv.ventasDiarias.join(',');
+
+  // Rellenar cada input de día con su valor
+  IDS_VENTA.forEach((id, i) => {
+    const el = document.getElementById(`venta-${id}`);
+    if (el) el.value = inv.ventasDiarias[i] ?? 0;
+  });
+
+  actualizarPromedioVentas();
   document.getElementById('modal-inventario').classList.remove('hidden');
   document.getElementById('inv-stock').focus();
 }
@@ -126,15 +160,7 @@ async function guardarInventario(e) {
   const tiendaId      = parseInt(document.getElementById('inv-tienda-id').value);
   const productoId    = parseInt(document.getElementById('inv-producto-id').value);
   const stockActual   = parseInt(document.getElementById('inv-stock').value);
-  const ventasDiarias = document.getElementById('inv-ventas').value
-    .split(',').map(v => parseInt(v.trim())).filter(v => !isNaN(v));
-
-  if (ventasDiarias.length !== 7) {
-    alert('Ingresa exactamente 7 valores de ventas separados por coma.');
-    btn.disabled = false;
-    btn.textContent = 'Guardar';
-    return;
-  }
+  const ventasDiarias = IDS_VENTA.map(id => parseInt(document.getElementById(`venta-${id}`)?.value) || 0);
 
   try {
     if (SUPABASE_CONFIGURED && db) {

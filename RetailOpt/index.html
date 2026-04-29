@@ -8,6 +8,9 @@
 </head>
 <body>
 
+  <!-- Overlay para cerrar sidebar en móvil -->
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="App.closeMobileSidebar()"></div>
+
   <div class="app" id="app">
 
     <aside class="sidebar" id="sidebar">
@@ -28,6 +31,7 @@
 
     <div class="main-area">
       <header class="topbar">
+        <button class="btn-hamburger" id="btn-hamburger" onclick="App.toggleMobileSidebar()" title="Menú">☰</button>
         <span class="topbar-title" id="topbar-title">📊 Dashboard</span>
         <div class="topbar-right">
           <button class="alert-pill hidden" id="alert-pill">⚠️ 0 alertas</button>

@@ -575,17 +575,97 @@ td.muted { color: var(--slate-500); }
 ::-webkit-scrollbar-thumb   { background: var(--slate-200); border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--slate-400); }
 
-/* ── Responsivo básico ───────────────────────────── */
+/* ── Responsivo tablet ───────────────────────────── */
 @media (max-width: 900px) {
   .kpi-grid     { grid-template-columns: repeat(2, 1fr); }
   .formula-grid { grid-template-columns: 1fr; }
   .impact-grid  { grid-template-columns: repeat(2, 1fr); }
 }
 
-@media (max-width: 600px) {
+/* ── Responsivo móvil ────────────────────────────── */
+@media (max-width: 768px) {
+
+  /* Sidebar como overlay deslizante */
+  .sidebar {
+    position: fixed;
+    top: 0; bottom: 0; left: 0;
+    z-index: 300;
+    width: var(--sidebar-w) !important;
+    transform: translateX(-100%);
+    transition: transform .25s ease;
+    box-shadow: none;
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+    box-shadow: 4px 0 20px rgba(0,0,0,.3);
+  }
+
+  /* Fondo oscuro al abrir sidebar en móvil */
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.45);
+    z-index: 299;
+    backdrop-filter: blur(1px);
+  }
+  .sidebar-overlay.visible { display: block; }
+
+  /* Ocultar el toggle ◀ en móvil (se usa el hamburger) */
+  .sidebar-toggle { display: none; }
+
+  /* Mostrar botón hamburger en topbar */
+  .btn-hamburger {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    font-size: 18px;
+    color: var(--slate-600);
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+    margin-right: 6px;
+    transition: background .15s;
+  }
+  .btn-hamburger:hover { background: var(--slate-100); }
+
+  /* Área principal ocupa todo el ancho */
+  .main-area { width: 100%; }
+
+  /* Contenido con menos padding */
+  .content { padding: 14px 12px; }
+
+  /* KPIs en 2 columnas */
+  .kpi-grid           { grid-template-columns: repeat(2, 1fr); }
   .alert-summary-grid { grid-template-columns: 1fr; }
-  .kpi-grid           { grid-template-columns: 1fr; }
-  .content            { padding: 14px; }
+  .impact-grid        { grid-template-columns: repeat(2, 1fr); }
+  .formula-grid       { grid-template-columns: 1fr; }
+
+  /* Tablas: scroll horizontal con acción fija a la derecha */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Títulos de vista más compactos */
+  .view-title { font-size: 17px; }
+
+  /* Tab row: scroll horizontal */
+  .tab-row { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }
+  .tab-btn { flex-shrink: 0; }
+
+  /* Ocultar texto largo en topbar */
+  .topbar-title { font-size: 11px; }
+
+  /* Alert pill más compacto */
+  .alert-pill { font-size: 10px; padding: 3px 8px; }
+}
+
+@media (max-width: 480px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .content  { padding: 12px 10px; }
+  .modal-box { border-radius: var(--radius-md) var(--radius-md) 0 0; }
+  .modal-overlay { align-items: flex-end; padding: 0; }
+  .form-row { grid-template-columns: 1fr; }
 }
 
 /* ══════════════════════════════════════════════════════
@@ -796,8 +876,68 @@ form { padding: 18px; }
 .badge-ok  { background: var(--green-100); color: #166534; }
 .badge-off { background: var(--slate-100); color: var(--slate-600); }
 
+/* ── Botón hamburger (oculto en desktop) ─────────────── */
+.btn-hamburger { display: none; }
+
+/* ── Grid de ventas por día de la semana ─────────────── */
+.ventas-semana {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.venta-dia {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.venta-dia span {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--slate-500);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.venta-dia input {
+  width: 100%;
+  text-align: center;
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-sm);
+  padding: 6px 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--slate-800);
+  background: var(--white);
+  transition: border-color .15s, box-shadow .15s;
+}
+
+.venta-dia input:focus {
+  outline: none;
+  border-color: var(--blue-600);
+  box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+}
+
+.venta-promedio {
+  margin-top: 8px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--slate-500);
+  background: var(--slate-50);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-sm);
+  padding: 5px 10px;
+}
+
+.venta-promedio strong { color: var(--blue-600); }
+
 /* ── Responsive modal ────────────────────────────────── */
 @media (max-width: 600px) {
   .modal-box { max-width: 100%; border-radius: var(--radius-md); }
   .form-row  { grid-template-columns: 1fr; }
+  .ventas-semana { gap: 4px; }
+  .venta-dia input { padding: 5px 2px; font-size: 12px; }
 }

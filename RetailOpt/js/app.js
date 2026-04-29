@@ -34,7 +34,21 @@ const App = {
 
   goto(key) {
     this.vistaActual = key;
+    this.closeMobileSidebar();
     this.render();
+  },
+
+  toggleMobileSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    const isOpen  = sidebar.classList.contains('mobile-open');
+    sidebar.classList.toggle('mobile-open', !isOpen);
+    overlay.classList.toggle('visible', !isOpen);
+  },
+
+  closeMobileSidebar() {
+    document.getElementById('sidebar')?.classList.remove('mobile-open');
+    document.getElementById('sidebar-overlay')?.classList.remove('visible');
   },
 
   toggleSidebar() {
