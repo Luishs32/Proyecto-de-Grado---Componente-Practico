@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "name": "retailopt",
+  "builds": [
+    {
+      "src": "RetailOpt/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/RetailOpt/$1"
+    }
+  ]
+}

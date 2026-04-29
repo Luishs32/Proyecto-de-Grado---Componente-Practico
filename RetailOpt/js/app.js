@@ -1,0 +1,196 @@
+'use strict';
+
+// ─────────────────────────────────────────────
+// ESTADO GLOBAL DE LA APLICACIÓN
+// ─────────────────────────────────────────────
+const App = {
+  vistaActual:  'dashboard',
+  tiendaActiva: 1,
+  leadTime:     3,
+  filtroRiesgo: 'TODOS',
+  sidebarOpen:  true,
+
+  vistas: [
+    { key: 'dashboard',  icon: '📊', label: 'Dashboard'        },
+    { key: 'tiendas',    icon: '🏪', label: 'Tiendas'          },
+    { key: 'productos',  icon: '📦', label: 'Productos'         },
+    { key: 'gondola',    icon: '🗄️', label: 'Config. Góndola'   },
+    { key: 'inventario', icon: '🏷️', label: 'Inventario'        },
+    { key: 'reposicion', icon: '🔄', label: 'Reposición'        },
+    { key: 'reportes',   icon: '📋', label: 'Reportes'          },
+  ],
+
+  renderMap: {
+    dashboard:  renderDashboard,
+    tiendas:    renderTiendas,
+    productos:  renderProductos,
+    gondola:    renderGondola,
+    inventario: renderInventario,
+    reposicion: renderReposicion,
+    reportes:   renderReportes,
+  },
+
+  // ── Navegación ──────────────────────────────────────
+  goto(key) {
+    this.vistaActual = key;
+    this.render();
+  },
+
+  // ── Toggle sidebar ──────────────────────────────────
+  toggleSidebar() {
+    this.sidebarOpen = !this.sidebarOpen;
+    const sidebar  = document.getElementById('sidebar');
+    const logoText = document.getElementById('logo-text');
+    const footer   = document.getElementById('sidebar-footer');
+    if (this.sidebarOpen) {
+      sidebar.classList.remove('collapsed');
+      logoText.style.display = '';
+      footer.style.display   = '';
+    } else {
+      sidebar.classList.add('collapsed');
+      logoText.style.display = 'none';
+      footer.style.display   = 'none';
+    }
+    this.renderNav();
+  },
+
+  // ── Conteo de alertas activas ───────────────────────
+  contarAlertas() {
+    if (!INVENTARIO.length) return 0;
+    return calcularTodos(this.leadTime)
+      .filter(c => ['QUIEBRE', 'CRÍTICO'].includes(c.resultado.nivelRiesgo))
+      .length;
+  },
+
+  // ── Render del sidebar ──────────────────────────────
+  renderNav() {
+    const alertas = this.contarAlertas();
+    const navEl   = document.getElementById('sidebar-nav');
+    if (!navEl) return;
+
+    navEl.innerHTML = this.vistas.map(v => {
+      const badgeHtml = (v.key === 'dashboard' && alertas > 0)
+        ? `<span class="nav-badge">${alertas}</span>`
+        : '';
+      const labelHtml = this.sidebarOpen
+        ? `<span>${v.label}</span>${badgeHtml}`
+        : '';
+      return `
+        <button class="nav-item ${this.vistaActual === v.key ? 'active' : ''}"
+                onclick="App.goto('${v.key}')"
+                title="${v.label}">
+          <span class="nav-icon">${v.icon}</span>
+          ${labelHtml}
+        </button>`;
+    }).join('');
+  },
+
+  // ── Render del topbar ───────────────────────────────
+  renderTopbar() {
+    const vista   = this.vistas.find(v => v.key === this.vistaActual);
+    const alertas = this.contarAlertas();
+    const titleEl = document.getElementById('topbar-title');
+    const pillEl  = document.getElementById('alert-pill');
+
+    if (titleEl) titleEl.textContent = `${vista?.icon || ''} ${vista?.label || ''}`;
+    if (pillEl) {
+      if (alertas > 0) {
+        pillEl.textContent = `⚠️ ${alertas} alerta${alertas > 1 ? 's' : ''} activa${alertas > 1 ? 's' : ''}`;
+        pillEl.classList.remove('hidden');
+        pillEl.onclick = () => this.goto('dashboard');
+      } else {
+        pillEl.classList.add('hidden');
+      }
+    }
+  },
+
+  // ── Render principal ────────────────────────────────
+  render() {
+    this.renderNav();
+    this.renderTopbar();
+    const contentEl = document.getElementById('content');
+    const renderFn  = this.renderMap[this.vistaActual];
+    if (contentEl && renderFn) {
+      contentEl.innerHTML = renderFn();
+    }
+  },
+
+  // ── Carga de datos desde Supabase ───────────────────
+  async cargarDatos() {
+    if (!SUPABASE_CONFIGURED || !db) return;
+
+    try {
+      const [resT, resP, resG, resI] = await Promise.all([
+        db.from('tiendas').select('*').order('id'),
+        db.from('productos').select('*').order('id'),
+        db.from('gondola').select('*'),
+        db.from('inventario').select('*'),
+      ]);
+
+      if (resT.error) throw resT.error;
+      if (resP.error) throw resP.error;
+      if (resG.error) throw resG.error;
+      if (resI.error) throw resI.error;
+
+      // Reemplazar datos en memoria con los de Supabase
+      TIENDAS.length = 0;
+      resT.data.forEach(r => TIENDAS.push({
+        id: r.id, nombre: r.nombre, ciudad: r.ciudad, estado: r.estado,
+      }));
+
+      PRODUCTOS.length = 0;
+      resP.data.forEach(r => PRODUCTOS.push({
+        id: r.id, nombre: r.nombre, categoria: r.categoria,
+        proveedor: r.proveedor, precio: parseFloat(r.precio),
+      }));
+
+      GONDOLA.length = 0;
+      resG.data.forEach(r => GONDOLA.push({
+        tiendaId: r.tienda_id, productoId: r.producto_id,
+        caras: r.caras, niveles: r.niveles, profundidad: r.profundidad,
+      }));
+
+      INVENTARIO.length = 0;
+      resI.data.forEach(r => INVENTARIO.push({
+        tiendaId: r.tienda_id, productoId: r.producto_id,
+        stockActual: r.stock_actual,
+        ventasDiarias: r.ventas_diarias || [0, 0, 0, 0, 0, 0, 0],
+      }));
+
+      if (TIENDAS.length > 0) this.tiendaActiva = TIENDAS[0].id;
+      console.log('[RetailOpt] Datos cargados desde Supabase ✓');
+    } catch (err) {
+      console.error('[RetailOpt] Error al cargar datos:', err.message);
+      const contentEl = document.getElementById('content');
+      if (contentEl) {
+        contentEl.innerHTML = `
+          <div class="info-banner" style="background:#fef2f2;border-color:#fca5a5;color:#991b1b">
+            ⚠️ Error al conectar con Supabase: ${err.message}<br>
+            <small>Usando datos de demostración en memoria.</small>
+          </div>`;
+      }
+    }
+  },
+};
+
+// ─────────────────────────────────────────────
+// INICIALIZACIÓN
+// ─────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  const toggleBtn = document.getElementById('sidebar-toggle');
+  if (toggleBtn) toggleBtn.addEventListener('click', () => App.toggleSidebar());
+
+  if (SUPABASE_CONFIGURED) {
+    const contentEl = document.getElementById('content');
+    if (contentEl) {
+      contentEl.innerHTML = `
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Conectando con Supabase…</p>
+        </div>`;
+    }
+    await App.cargarDatos();
+  }
+
+  App.render();
+});
