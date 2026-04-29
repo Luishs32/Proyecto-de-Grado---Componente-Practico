@@ -2,8 +2,8 @@
 
 // ── Credenciales de Supabase ──────────────────────────
 // Reemplaza estos valores con los de tu proyecto en supabase.com
-const SUPABASE_URL      = 'https://TU_PROYECTO.supabase.co';
-const SUPABASE_ANON_KEY = 'TU_ANON_KEY_AQUI';
+const SUPABASE_URL      = 'https://gvawohohhqhuyqbrbafv.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_FzCsIt6M2oUze7zViAPQSg_Zq8EjVh5';
 
 // Detecta si las credenciales ya fueron configuradas
 const SUPABASE_CONFIGURED = !SUPABASE_URL.includes('TU_PROYECTO');
