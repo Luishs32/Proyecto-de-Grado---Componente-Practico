@@ -1,8 +1,10 @@
 'use strict';
 
-// ─────────────────────────────────────────────
-// ESTADO GLOBAL DE LA APLICACIÓN
-// ─────────────────────────────────────────────
+/**
+ * app.js — Controlador principal de la aplicación
+ * Proyecto de Grado · UNAD · Ingeniería de Sistemas · 2026
+ */
+
 const App = {
   vistaActual:  'dashboard',
   tiendaActiva: 1,
@@ -30,13 +32,11 @@ const App = {
     reportes:   renderReportes,
   },
 
-  // ── Navegación ──────────────────────────────────────
   goto(key) {
     this.vistaActual = key;
     this.render();
   },
 
-  // ── Toggle sidebar ──────────────────────────────────
   toggleSidebar() {
     this.sidebarOpen = !this.sidebarOpen;
     const sidebar  = document.getElementById('sidebar');
@@ -54,7 +54,6 @@ const App = {
     this.renderNav();
   },
 
-  // ── Conteo de alertas activas ───────────────────────
   contarAlertas() {
     if (!INVENTARIO.length) return 0;
     return calcularTodos(this.leadTime)
@@ -62,30 +61,22 @@ const App = {
       .length;
   },
 
-  // ── Render del sidebar ──────────────────────────────
   renderNav() {
     const alertas = this.contarAlertas();
     const navEl   = document.getElementById('sidebar-nav');
     if (!navEl) return;
 
     navEl.innerHTML = this.vistas.map(v => {
-      const badgeHtml = (v.key === 'dashboard' && alertas > 0)
-        ? `<span class="nav-badge">${alertas}</span>`
-        : '';
-      const labelHtml = this.sidebarOpen
-        ? `<span>${v.label}</span>${badgeHtml}`
-        : '';
+      const badge   = (v.key === 'dashboard' && alertas > 0) ? `<span class="nav-badge">${alertas}</span>` : '';
+      const label   = this.sidebarOpen ? `<span>${v.label}</span>${badge}` : '';
       return `
         <button class="nav-item ${this.vistaActual === v.key ? 'active' : ''}"
-                onclick="App.goto('${v.key}')"
-                title="${v.label}">
-          <span class="nav-icon">${v.icon}</span>
-          ${labelHtml}
+                onclick="App.goto('${v.key}')" title="${v.label}">
+          <span class="nav-icon">${v.icon}</span>${label}
         </button>`;
     }).join('');
   },
 
-  // ── Render del topbar ───────────────────────────────
   renderTopbar() {
     const vista   = this.vistas.find(v => v.key === this.vistaActual);
     const alertas = this.contarAlertas();
@@ -93,6 +84,7 @@ const App = {
     const pillEl  = document.getElementById('alert-pill');
 
     if (titleEl) titleEl.textContent = `${vista?.icon || ''} ${vista?.label || ''}`;
+
     if (pillEl) {
       if (alertas > 0) {
         pillEl.textContent = `⚠️ ${alertas} alerta${alertas > 1 ? 's' : ''} activa${alertas > 1 ? 's' : ''}`;
@@ -104,18 +96,14 @@ const App = {
     }
   },
 
-  // ── Render principal ────────────────────────────────
   render() {
     this.renderNav();
     this.renderTopbar();
     const contentEl = document.getElementById('content');
     const renderFn  = this.renderMap[this.vistaActual];
-    if (contentEl && renderFn) {
-      contentEl.innerHTML = renderFn();
-    }
+    if (contentEl && renderFn) contentEl.innerHTML = renderFn();
   },
 
-  // ── Carga de datos desde Supabase ───────────────────
   async cargarDatos() {
     if (!SUPABASE_CONFIGURED || !db) return;
 
@@ -132,11 +120,8 @@ const App = {
       if (resG.error) throw resG.error;
       if (resI.error) throw resI.error;
 
-      // Reemplazar datos en memoria con los de Supabase
       TIENDAS.length = 0;
-      resT.data.forEach(r => TIENDAS.push({
-        id: r.id, nombre: r.nombre, ciudad: r.ciudad, estado: r.estado,
-      }));
+      resT.data.forEach(r => TIENDAS.push({ id: r.id, nombre: r.nombre, ciudad: r.ciudad, estado: r.estado }));
 
       PRODUCTOS.length = 0;
       resP.data.forEach(r => PRODUCTOS.push({
@@ -158,24 +143,12 @@ const App = {
       }));
 
       if (TIENDAS.length > 0) this.tiendaActiva = TIENDAS[0].id;
-      console.log('[RetailOpt] Datos cargados desde Supabase ✓');
     } catch (err) {
       console.error('[RetailOpt] Error al cargar datos:', err.message);
-      const contentEl = document.getElementById('content');
-      if (contentEl) {
-        contentEl.innerHTML = `
-          <div class="info-banner" style="background:#fef2f2;border-color:#fca5a5;color:#991b1b">
-            ⚠️ Error al conectar con Supabase: ${err.message}<br>
-            <small>Usando datos de demostración en memoria.</small>
-          </div>`;
-      }
     }
   },
 };
 
-// ─────────────────────────────────────────────
-// INICIALIZACIÓN
-// ─────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   const toggleBtn = document.getElementById('sidebar-toggle');
   if (toggleBtn) toggleBtn.addEventListener('click', () => App.toggleSidebar());
@@ -186,7 +159,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       contentEl.innerHTML = `
         <div class="loading-state">
           <div class="spinner"></div>
-          <p>Conectando con Supabase…</p>
+          <p>Cargando datos…</p>
         </div>`;
     }
     await App.cargarDatos();

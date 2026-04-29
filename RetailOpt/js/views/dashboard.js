@@ -1,27 +1,25 @@
-/**
- * views/dashboard.js — Vista: Panel de Control
- * Proyecto de Grado · UNAD · 2026
- */
-
 'use strict';
 
-function renderDashboard() {
-  const todos     = calcularTodos(App.leadTime);
-  const quiebres  = todos.filter(c => c.resultado.nivelRiesgo === 'QUIEBRE');
-  const criticos  = todos.filter(c => c.resultado.nivelRiesgo === 'CRÍTICO');
-  const altos     = todos.filter(c => c.resultado.nivelRiesgo === 'ALTO');
-  const totalPed  = todos.reduce((s, c) => s + c.resultado.cantidadSugerida, 0);
-  const totalStk  = INVENTARIO.reduce((s, i) => s + i.stockActual, 0);
-  const hoy       = new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
+/**
+ * views/dashboard.js — Panel de Control
+ * Proyecto de Grado · UNAD · Ingeniería de Sistemas · 2026
+ */
 
-  // Alertas a mostrar (máx 8, ordenadas por prioridad)
-  const orden = { QUIEBRE: 0, CRÍTICO: 1, ALTO: 2 };
+function renderDashboard() {
+  const todos    = calcularTodos(App.leadTime);
+  const quiebres = todos.filter(c => c.resultado.nivelRiesgo === 'QUIEBRE');
+  const criticos = todos.filter(c => c.resultado.nivelRiesgo === 'CRÍTICO');
+  const altos    = todos.filter(c => c.resultado.nivelRiesgo === 'ALTO');
+  const totalPed = todos.reduce((s, c) => s + c.resultado.cantidadSugerida, 0);
+  const totalStk = INVENTARIO.reduce((s, i) => s + i.stockActual, 0);
+  const hoy      = new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
+
+  const orden   = { QUIEBRE: 0, CRÍTICO: 1, ALTO: 2 };
   const alertas = todos
     .filter(c => ['QUIEBRE', 'CRÍTICO', 'ALTO'].includes(c.resultado.nivelRiesgo))
     .sort((a, b) => orden[a.resultado.nivelRiesgo] - orden[b.resultado.nivelRiesgo])
     .slice(0, 8);
 
-  // ── KPIs ──────────────────────────────────────────
   const kpiHTML = `
     <div class="kpi-grid">
       <div class="kpi-card">
@@ -54,7 +52,6 @@ function renderDashboard() {
       </div>
     </div>`;
 
-  // ── Resumen de alertas ─────────────────────────────
   const alertSummary = `
     <div class="alert-summary-grid">
       <div class="alert-box" style="background:#fef2f2;border-color:#fca5a5">
@@ -71,7 +68,6 @@ function renderDashboard() {
       </div>
     </div>`;
 
-  // ── Lista de alertas ───────────────────────────────
   const alertRows = alertas.length === 0
     ? '<p style="text-align:center;padding:20px;font-size:12px;color:#94a3b8">✅ Sin alertas activas</p>'
     : alertas.map(a => `
@@ -87,7 +83,11 @@ function renderDashboard() {
         </div>
       </div>`).join('');
 
-  const alertCard = `
+  return `
+    <h1 class="view-title">Panel de Control</h1>
+    <p class="view-subtitle">Resumen general del sistema de reposición inteligente</p>
+    ${kpiHTML}
+    ${alertSummary}
     <div class="card">
       <div class="card-header">
         <span class="ch-title">⚠️ Alertas prioritarias</span>
@@ -95,11 +95,4 @@ function renderDashboard() {
       </div>
       ${alertRows}
     </div>`;
-
-  return `
-    <h1 class="view-title">Panel de Control</h1>
-    <p class="view-subtitle">Resumen general del sistema de reposición inteligente</p>
-    ${kpiHTML}
-    ${alertSummary}
-    ${alertCard}`;
 }

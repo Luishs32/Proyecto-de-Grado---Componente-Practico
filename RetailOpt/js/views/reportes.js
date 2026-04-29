@@ -1,12 +1,11 @@
+'use strict';
+
 /**
- * views/reportes.js — Vista: Reportes del Sistema
- * Proyecto de Grado · UNAD · 2026
+ * views/reportes.js — Reportes del Sistema (RF7)
+ * Proyecto de Grado · UNAD · Ingeniería de Sistemas · 2026
  *
  * RF7: Generar reportes de quiebres de stock.
- * Consolidado por tienda, alertas activas e indicadores de impacto.
  */
-
-'use strict';
 
 function renderReportes() {
   const todos    = calcularTodos(App.leadTime);
@@ -16,33 +15,30 @@ function renderReportes() {
     (todos.filter(c => ['BAJO', 'MEDIO'].includes(c.resultado.nivelRiesgo)).length / todos.length) * 100
   );
 
-  // ── Resumen por tienda ─────────────────────────────
   const porTienda = TIENDAS.map(t => {
     const tc = todos.filter(c => c.tiendaId === t.id);
     return {
-      tienda:  t,
-      quiebres: tc.filter(c => c.resultado.nivelRiesgo === 'QUIEBRE').length,
-      totalPed: tc.reduce((s, c) => s + c.resultado.cantidadSugerida, 0),
-      valorPed: tc.reduce((s, c) => s + (c.resultado.cantidadSugerida * c.producto.precio), 0),
+      tienda:     t,
+      quiebres:   tc.filter(c => c.resultado.nivelRiesgo === 'QUIEBRE').length,
+      totalPed:   tc.reduce((s, c) => s + c.resultado.cantidadSugerida, 0),
+      valorPed:   tc.reduce((s, c) => s + (c.resultado.cantidadSugerida * c.producto.precio), 0),
       stockTotal: tc.reduce((s, c) => s + c.stockActual, 0),
     };
   });
+
+  const totalStk = todos.reduce((s, c) => s + c.stockActual, 0);
+  const totalPed = todos.reduce((s, c) => s + c.resultado.cantidadSugerida, 0);
 
   const filasResumen = porTienda.map(r => `
     <tr>
       <td class="fw">🏪 ${r.tienda.nombre}</td>
       <td style="font-weight:700">${r.stockTotal}</td>
-      <td>
-        ${r.quiebres > 0
-          ? `<span style="background:#fef2f2;color:#991b1b;font-weight:700;padding:2px 8px;border-radius:12px;font-size:11px">${r.quiebres}</span>`
-          : `<span style="color:#16a34a;font-weight:700">0 ✓</span>`}
-      </td>
+      <td>${r.quiebres > 0
+        ? `<span style="background:#fef2f2;color:#991b1b;font-weight:700;padding:2px 8px;border-radius:12px;font-size:11px">${r.quiebres}</span>`
+        : `<span style="color:#16a34a;font-weight:700">0 ✓</span>`}</td>
       <td style="font-weight:700;color:#2563eb">${r.totalPed} unid.</td>
       <td style="font-weight:600">$${r.valorPed.toLocaleString()}</td>
     </tr>`).join('');
-
-  const totalStk = todos.reduce((s, c) => s + c.stockActual, 0);
-  const totalPed = todos.reduce((s, c) => s + c.resultado.cantidadSugerida, 0);
 
   const resumenCard = `
     <div class="card">
@@ -54,11 +50,8 @@ function renderReportes() {
         <table>
           <thead>
             <tr>
-              <th>Tienda</th>
-              <th>Stock Total</th>
-              <th>Quiebres</th>
-              <th>A Reponer</th>
-              <th>Valor del Pedido</th>
+              <th>Tienda</th><th>Stock Total</th><th>Quiebres</th>
+              <th>A Reponer</th><th>Valor del Pedido</th>
             </tr>
           </thead>
           <tbody>
@@ -75,7 +68,6 @@ function renderReportes() {
       </div>
     </div>`;
 
-  // ── Quiebres activos ──────────────────────────────
   const quiebresCard = quiebres.length > 0 ? `
     <div class="card" style="border-color:#fca5a5">
       <div class="card-header" style="background:#fef2f2;border-color:#fca5a5">
@@ -97,7 +89,6 @@ function renderReportes() {
       </div>
     </div>` : '';
 
-  // ── Tarjeta de impacto ────────────────────────────
   const impactCard = `
     <div class="impact-card">
       <p class="ic-label">Indicadores de impacto del modelo de optimización</p>

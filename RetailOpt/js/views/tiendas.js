@@ -1,8 +1,9 @@
 'use strict';
 
-// ─────────────────────────────────────────────
-// VISTA: Gestión de Tiendas (CRUD)
-// ─────────────────────────────────────────────
+/**
+ * views/tiendas.js — Gestión de Tiendas
+ * Proyecto de Grado · UNAD · Ingeniería de Sistemas · 2026
+ */
 
 function renderTiendas() {
   const filas = TIENDAS.map(t => `
@@ -10,24 +11,16 @@ function renderTiendas() {
       <td class="text-muted text-small" style="font-family:monospace">#${t.id}</td>
       <td class="fw">${t.nombre}</td>
       <td>${t.ciudad || '—'}</td>
-      <td>
-        <span class="badge ${t.estado === 'Activa' ? 'badge-bajo' : 'badge-medio'}">${t.estado || 'Activa'}</span>
-      </td>
+      <td><span class="badge ${t.estado === 'Activa' ? 'badge-bajo' : 'badge-medio'}">${t.estado || 'Activa'}</span></td>
       <td>
         <button class="btn-icon" onclick="editarTienda(${t.id})" title="Editar">✏️</button>
         <button class="btn-icon btn-danger" onclick="eliminarTienda(${t.id})" title="Eliminar">🗑️</button>
       </td>
     </tr>`).join('');
 
-  const notificacion = !SUPABASE_CONFIGURED
-    ? `<div class="info-banner">⚠️ Modo demo — los cambios se guardan en memoria (no persisten al recargar). Configura Supabase para persistencia real.</div>`
-    : '';
-
   return `
     <h1 class="view-title">Gestión de Tiendas</h1>
     <p class="view-subtitle">${TIENDAS.length} tienda${TIENDAS.length !== 1 ? 's' : ''} registrada${TIENDAS.length !== 1 ? 's' : ''} en el sistema</p>
-
-    ${notificacion}
 
     <div class="card">
       <div class="card-header">
@@ -38,19 +31,14 @@ function renderTiendas() {
         <table>
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Nombre</th>
-              <th>Ciudad</th>
-              <th>Estado</th>
-              <th>Acciones</th>
+              <th>ID</th><th>Nombre</th><th>Ciudad</th><th>Estado</th><th>Acciones</th>
             </tr>
           </thead>
-          <tbody>${filas || '<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:20px">No hay tiendas registradas</td></tr>'}</tbody>
+          <tbody>${filas || '<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:20px">Sin tiendas registradas</td></tr>'}</tbody>
         </table>
       </div>
     </div>
 
-    <!-- ══ MODAL TIENDA ══ -->
     <div id="modal-tienda" class="modal-overlay hidden" onclick="cerrarModalTiendaFuera(event)">
       <div class="modal-box">
         <div class="modal-header">
@@ -60,7 +48,7 @@ function renderTiendas() {
         <form id="form-tienda" onsubmit="guardarTienda(event)">
           <input type="hidden" id="tienda-id" />
           <div class="form-group">
-            <label>Nombre de la tienda *</label>
+            <label>Nombre *</label>
             <input type="text" id="tienda-nombre" required placeholder="Ej: Tienda Norte" />
           </div>
           <div class="form-group">
@@ -83,13 +71,12 @@ function renderTiendas() {
     </div>`;
 }
 
-// ── Abrir modal ─────────────────────────────────────────
 function abrirModalTienda(tienda = null) {
   document.getElementById('modal-tienda-titulo').textContent = tienda ? 'Editar Tienda' : 'Nueva Tienda';
-  document.getElementById('tienda-id').value    = tienda ? tienda.id      : '';
-  document.getElementById('tienda-nombre').value = tienda ? tienda.nombre  : '';
-  document.getElementById('tienda-ciudad').value = tienda ? (tienda.ciudad || '') : '';
-  document.getElementById('tienda-estado').value = tienda ? (tienda.estado || 'Activa') : 'Activa';
+  document.getElementById('tienda-id').value     = tienda?.id      ?? '';
+  document.getElementById('tienda-nombre').value = tienda?.nombre  ?? '';
+  document.getElementById('tienda-ciudad').value = tienda?.ciudad  ?? '';
+  document.getElementById('tienda-estado').value = tienda?.estado  ?? 'Activa';
   document.getElementById('modal-tienda').classList.remove('hidden');
   document.getElementById('tienda-nombre').focus();
 }
@@ -102,13 +89,11 @@ function cerrarModalTiendaFuera(e) {
   if (e.target.id === 'modal-tienda') cerrarModalTienda();
 }
 
-// ── Editar ──────────────────────────────────────────────
 function editarTienda(id) {
   const tienda = TIENDAS.find(t => t.id === id);
   if (tienda) abrirModalTienda(tienda);
 }
 
-// ── Guardar (crear o actualizar) ────────────────────────
 async function guardarTienda(e) {
   e.preventDefault();
   const btn  = document.getElementById('btn-guardar-tienda');
@@ -139,8 +124,7 @@ async function guardarTienda(e) {
         const idx = TIENDAS.findIndex(t => t.id === parseInt(id));
         if (idx !== -1) Object.assign(TIENDAS[idx], datos);
       } else {
-        const newId = Math.max(0, ...TIENDAS.map(t => t.id)) + 1;
-        TIENDAS.push({ id: newId, ...datos });
+        TIENDAS.push({ id: Math.max(0, ...TIENDAS.map(t => t.id)) + 1, ...datos });
       }
     }
     cerrarModalTienda();
@@ -153,11 +137,10 @@ async function guardarTienda(e) {
   }
 }
 
-// ── Eliminar ────────────────────────────────────────────
 async function eliminarTienda(id) {
   const tienda = TIENDAS.find(t => t.id === id);
   if (!tienda) return;
-  if (!confirm(`¿Eliminar "${tienda.nombre}"? También se eliminarán sus configuraciones de góndola e inventario.`)) return;
+  if (!confirm(`¿Eliminar "${tienda.nombre}"? Se eliminarán también sus góndolas e inventario asociados.`)) return;
 
   try {
     if (SUPABASE_CONFIGURED && db) {
@@ -165,7 +148,7 @@ async function eliminarTienda(id) {
       if (error) throw error;
     }
     TIENDAS.splice(TIENDAS.findIndex(t => t.id === id), 1);
-    for (let i = GONDOLA.length   - 1; i >= 0; i--) if (GONDOLA[i].tiendaId   === id) GONDOLA.splice(i, 1);
+    for (let i = GONDOLA.length    - 1; i >= 0; i--) if (GONDOLA[i].tiendaId    === id) GONDOLA.splice(i, 1);
     for (let i = INVENTARIO.length - 1; i >= 0; i--) if (INVENTARIO[i].tiendaId === id) INVENTARIO.splice(i, 1);
     if (App.tiendaActiva === id && TIENDAS.length > 0) App.tiendaActiva = TIENDAS[0].id;
     App.render();

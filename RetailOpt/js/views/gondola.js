@@ -1,29 +1,31 @@
 'use strict';
 
-// ─────────────────────────────────────────────
-// VISTA: Configuración de Góndola (CRUD)
-// RF2 – Registrar caras, niveles y profundidad
-// ─────────────────────────────────────────────
+/**
+ * views/gondola.js — Configuración de Góndola (RF2)
+ * Proyecto de Grado · UNAD · Ingeniería de Sistemas · 2026
+ *
+ * RF2: Registrar número de caras, niveles y profundidad por producto.
+ * La capacidad de exhibición física determina el stock objetivo
+ * en el algoritmo de reposición.
+ */
 
 function renderGondola() {
   const tiendaId = App.tiendaActiva;
   const tienda   = TIENDAS.find(t => t.id === tiendaId);
   const gondolas = GONDOLA.filter(g => g.tiendaId === tiendaId);
 
-  // ── Tabs de tiendas ───────────────────────────────────
   const tabs = TIENDAS.map(t => `
     <button class="tab-btn ${t.id === tiendaId ? 'active' : ''}"
             onclick="App.tiendaActiva=${t.id}; App.render()">
       🏪 ${t.nombre}
     </button>`).join('');
 
-  // ── Filas de la tabla ─────────────────────────────────
   const filas = gondolas.map(g => {
     const producto = PRODUCTOS.find(p => p.id === g.productoId);
     const cap      = g.caras * g.niveles * g.profundidad;
     return `
     <tr>
-      <td class="fw">${producto ? producto.nombre : '—'}</td>
+      <td class="fw">${producto?.nombre ?? '—'}</td>
       <td style="text-align:center;font-weight:700">${g.caras}</td>
       <td style="text-align:center;font-weight:700">${g.niveles}</td>
       <td style="text-align:center;font-weight:700">${g.profundidad}</td>
@@ -38,28 +40,21 @@ function renderGondola() {
     </tr>`;
   }).join('');
 
-  // Productos disponibles para agregar (sin configuración aún)
-  const idsConGondola = gondolas.map(g => g.productoId);
-  const prodDisponibles = PRODUCTOS.filter(p => !idsConGondola.includes(p.id));
-  const opcionesProducto = prodDisponibles.map(p =>
-    `<option value="${p.id}">${p.nombre}</option>`).join('');
-
-  const notificacion = !SUPABASE_CONFIGURED
-    ? `<div class="info-banner">⚠️ Modo demo — los cambios se guardan en memoria. Configura Supabase para persistencia real.</div>`
-    : '';
+  const idsConGondola    = gondolas.map(g => g.productoId);
+  const prodDisponibles  = PRODUCTOS.filter(p => !idsConGondola.includes(p.id));
+  const opcionesProducto = prodDisponibles.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
 
   return `
     <h1 class="view-title">Configuración de Góndola</h1>
-    <p class="view-subtitle">RF2 – Registra caras, niveles y profundidad por producto y tienda</p>
+    <p class="view-subtitle">RF2 – Caras, niveles y profundidad por producto y tienda</p>
 
-    ${notificacion}
     <div class="tab-row">${tabs}</div>
 
     <div class="card">
       <div class="card-header">
-        <span class="ch-title">🗄️ ${tienda ? tienda.nombre : ''}</span>
+        <span class="ch-title">🗄️ ${tienda?.nombre ?? ''}</span>
         <button class="btn-primary" onclick="abrirModalGondolaNuevo()"
-          ${prodDisponibles.length === 0 ? 'disabled title="Todos los productos ya tienen configuración"' : ''}>
+          ${prodDisponibles.length === 0 ? 'disabled title="Todos los productos tienen configuración asignada"' : ''}>
           + Nueva Config.
         </button>
       </div>
@@ -80,7 +75,6 @@ function renderGondola() {
       </div>
     </div>
 
-    <!-- ══ MODAL GÓNDOLA ══ -->
     <div id="modal-gondola" class="modal-overlay hidden" onclick="cerrarModalGondolaFuera(event)">
       <div class="modal-box">
         <div class="modal-header">
@@ -91,19 +85,14 @@ function renderGondola() {
           <input type="hidden" id="gondola-tienda-id" />
           <input type="hidden" id="gondola-producto-id" />
           <input type="hidden" id="gondola-es-nuevo" value="0" />
-
-          <!-- Selector para nuevo (oculto en edición) -->
           <div class="form-group" id="gondola-select-wrap" style="display:none">
             <label>Producto *</label>
             <select id="gondola-producto-select">${opcionesProducto}</select>
           </div>
-
-          <!-- Nombre solo lectura (visible en edición) -->
           <div class="form-group" id="gondola-nombre-wrap">
             <label>Producto</label>
             <input type="text" id="gondola-producto-nombre" readonly class="input-readonly" />
           </div>
-
           <div class="form-row">
             <div class="form-group">
               <label>Caras *</label>
@@ -118,7 +107,7 @@ function renderGondola() {
               <input type="number" id="gondola-profundidad" required min="1" max="20" />
             </div>
           </div>
-          <p class="form-hint">Capacidad de exhibición = Caras × Niveles × Profundidad</p>
+          <small class="form-hint">Capacidad = Caras × Niveles × Profundidad</small>
           <div class="form-actions">
             <button type="button" class="btn-secondary" onclick="cerrarModalGondola()">Cancelar</button>
             <button type="submit" class="btn-primary" id="btn-guardar-gondola">Guardar</button>
@@ -128,37 +117,35 @@ function renderGondola() {
     </div>`;
 }
 
-// ── Abrir modal — nueva configuración ──────────────────
 function abrirModalGondolaNuevo() {
-  document.getElementById('modal-gondola-titulo').textContent = 'Nueva Configuración';
-  document.getElementById('gondola-tienda-id').value  = App.tiendaActiva;
-  document.getElementById('gondola-producto-id').value = '';
-  document.getElementById('gondola-es-nuevo').value   = '1';
-  document.getElementById('gondola-select-wrap').style.display  = '';
-  document.getElementById('gondola-nombre-wrap').style.display  = 'none';
-  document.getElementById('gondola-caras').value      = 1;
-  document.getElementById('gondola-niveles').value    = 1;
+  document.getElementById('modal-gondola-titulo').textContent  = 'Nueva Configuración';
+  document.getElementById('gondola-tienda-id').value           = App.tiendaActiva;
+  document.getElementById('gondola-producto-id').value         = '';
+  document.getElementById('gondola-es-nuevo').value            = '1';
+  document.getElementById('gondola-select-wrap').style.display = '';
+  document.getElementById('gondola-nombre-wrap').style.display = 'none';
+  document.getElementById('gondola-caras').value       = 1;
+  document.getElementById('gondola-niveles').value     = 1;
   document.getElementById('gondola-profundidad').value = 1;
   document.getElementById('modal-gondola').classList.remove('hidden');
   document.getElementById('gondola-caras').focus();
 }
 
-// ── Abrir modal — editar ────────────────────────────────
 function editarGondola(tiendaId, productoId) {
   const g    = GONDOLA.find(x => x.tiendaId === tiendaId && x.productoId === productoId);
   const prod = PRODUCTOS.find(p => p.id === productoId);
   if (!g) return;
 
-  document.getElementById('modal-gondola-titulo').textContent   = 'Editar Configuración';
-  document.getElementById('gondola-tienda-id').value   = tiendaId;
-  document.getElementById('gondola-producto-id').value  = productoId;
-  document.getElementById('gondola-es-nuevo').value    = '0';
+  document.getElementById('modal-gondola-titulo').textContent  = 'Editar Configuración';
+  document.getElementById('gondola-tienda-id').value           = tiendaId;
+  document.getElementById('gondola-producto-id').value         = productoId;
+  document.getElementById('gondola-es-nuevo').value            = '0';
   document.getElementById('gondola-select-wrap').style.display = 'none';
   document.getElementById('gondola-nombre-wrap').style.display = '';
-  document.getElementById('gondola-producto-nombre').value = prod ? prod.nombre : '';
-  document.getElementById('gondola-caras').value       = g.caras;
-  document.getElementById('gondola-niveles').value     = g.niveles;
-  document.getElementById('gondola-profundidad').value  = g.profundidad;
+  document.getElementById('gondola-producto-nombre').value     = prod?.nombre ?? '';
+  document.getElementById('gondola-caras').value               = g.caras;
+  document.getElementById('gondola-niveles').value             = g.niveles;
+  document.getElementById('gondola-profundidad').value         = g.profundidad;
   document.getElementById('modal-gondola').classList.remove('hidden');
   document.getElementById('gondola-caras').focus();
 }
@@ -171,15 +158,14 @@ function cerrarModalGondolaFuera(e) {
   if (e.target.id === 'modal-gondola') cerrarModalGondola();
 }
 
-// ── Guardar ─────────────────────────────────────────────
 async function guardarGondola(e) {
   e.preventDefault();
   const btn = document.getElementById('btn-guardar-gondola');
   btn.disabled = true;
   btn.textContent = 'Guardando…';
 
-  const tiendaId  = parseInt(document.getElementById('gondola-tienda-id').value);
-  const esNuevo   = document.getElementById('gondola-es-nuevo').value === '1';
+  const tiendaId   = parseInt(document.getElementById('gondola-tienda-id').value);
+  const esNuevo    = document.getElementById('gondola-es-nuevo').value === '1';
   const productoId = esNuevo
     ? parseInt(document.getElementById('gondola-producto-select').value)
     : parseInt(document.getElementById('gondola-producto-id').value);
@@ -193,9 +179,7 @@ async function guardarGondola(e) {
   try {
     if (SUPABASE_CONFIGURED && db) {
       if (esNuevo) {
-        const { error } = await db.from('gondola').insert({
-          tienda_id: tiendaId, producto_id: productoId, ...datos
-        });
+        const { error } = await db.from('gondola').insert({ tienda_id: tiendaId, producto_id: productoId, ...datos });
         if (error) throw error;
         GONDOLA.push({ tiendaId, productoId, ...datos });
       } else {
@@ -223,10 +207,9 @@ async function guardarGondola(e) {
   }
 }
 
-// ── Eliminar ────────────────────────────────────────────
 async function eliminarGondola(tiendaId, productoId) {
   const prod = PRODUCTOS.find(p => p.id === productoId);
-  if (!confirm(`¿Eliminar la configuración de góndola para "${prod ? prod.nombre : 'este producto'}"?`)) return;
+  if (!confirm(`¿Eliminar la configuración de góndola para "${prod?.nombre ?? 'este producto'}"?`)) return;
 
   try {
     if (SUPABASE_CONFIGURED && db) {

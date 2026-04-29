@@ -1,28 +1,19 @@
-/**
- * data.js — Datos del sistema RetailOpt
- * Proyecto de Grado · UNAD · Ingeniería de Sistemas · 2026
- *
- * Contiene las estructuras de datos iniciales:
- *   - TIENDAS
- *   - PRODUCTOS
- *   - GONDOLA  (configuración física de exhibición por tienda-producto)
- *   - INVENTARIO (stock actual + historial de ventas 7 días)
- */
-
 'use strict';
 
-// ─────────────────────────────────────────────
-// TIENDAS
-// ─────────────────────────────────────────────
+/**
+ * data.js — Datos de referencia del sistema RetailOpt
+ * Proyecto de Grado · UNAD · Ingeniería de Sistemas · 2026
+ *
+ * Contiene los datos iniciales en memoria utilizados como fallback
+ * cuando la conexión con Supabase no está disponible.
+ */
+
 const TIENDAS = [
   { id: 1, nombre: 'Tienda Centro',  ciudad: 'Pereira', estado: 'Activa' },
   { id: 2, nombre: 'Tienda Pinares', ciudad: 'Pereira', estado: 'Activa' },
   { id: 3, nombre: 'Tienda Cuba',    ciudad: 'Pereira', estado: 'Activa' },
 ];
 
-// ─────────────────────────────────────────────
-// PRODUCTOS
-// ─────────────────────────────────────────────
 const PRODUCTOS = [
   { id: 1, nombre: 'Leche Entera 1L',       categoria: 'Lácteos',     proveedor: 'Alquería',  precio: 3200  },
   { id: 2, nombre: 'Arroz Diana 500g',       categoria: 'Granos',      proveedor: 'Diana',     precio: 2100  },
@@ -34,13 +25,8 @@ const PRODUCTOS = [
   { id: 8, nombre: 'Salsa de Tomate 400g',   categoria: 'Condimentos', proveedor: 'Fruco',     precio: 6200  },
 ];
 
-// ─────────────────────────────────────────────
-// CONFIGURACIÓN DE GÓNDOLA
-// Campos: tiendaId, productoId, caras, niveles, profundidad
 // Capacidad de Exhibición = caras × niveles × profundidad
-// ─────────────────────────────────────────────
 const GONDOLA = [
-  // Tienda 1 – Centro
   { tiendaId: 1, productoId: 1, caras: 4, niveles: 3, profundidad: 2 },
   { tiendaId: 1, productoId: 2, caras: 6, niveles: 2, profundidad: 3 },
   { tiendaId: 1, productoId: 3, caras: 3, niveles: 2, profundidad: 2 },
@@ -49,7 +35,6 @@ const GONDOLA = [
   { tiendaId: 1, productoId: 6, caras: 3, niveles: 3, profundidad: 2 },
   { tiendaId: 1, productoId: 7, caras: 5, niveles: 2, profundidad: 4 },
   { tiendaId: 1, productoId: 8, caras: 4, niveles: 2, profundidad: 3 },
-  // Tienda 2 – Pinares
   { tiendaId: 2, productoId: 1, caras: 3, niveles: 2, profundidad: 2 },
   { tiendaId: 2, productoId: 2, caras: 5, niveles: 2, profundidad: 2 },
   { tiendaId: 2, productoId: 3, caras: 2, niveles: 2, profundidad: 2 },
@@ -58,7 +43,6 @@ const GONDOLA = [
   { tiendaId: 2, productoId: 6, caras: 2, niveles: 3, profundidad: 2 },
   { tiendaId: 2, productoId: 7, caras: 4, niveles: 2, profundidad: 3 },
   { tiendaId: 2, productoId: 8, caras: 3, niveles: 2, profundidad: 2 },
-  // Tienda 3 – Cuba
   { tiendaId: 3, productoId: 1, caras: 5, niveles: 3, profundidad: 3 },
   { tiendaId: 3, productoId: 2, caras: 7, niveles: 2, profundidad: 4 },
   { tiendaId: 3, productoId: 3, caras: 4, niveles: 2, profundidad: 2 },
@@ -69,13 +53,7 @@ const GONDOLA = [
   { tiendaId: 3, productoId: 8, caras: 5, niveles: 2, profundidad: 3 },
 ];
 
-// ─────────────────────────────────────────────
-// INVENTARIO
-// stockActual: unidades físicas en tienda
-// ventasDiarias: historial de los últimos 7 días
-// ─────────────────────────────────────────────
 const INVENTARIO = [
-  // ── Tienda 1 ──
   { tiendaId: 1, productoId: 1, stockActual: 8,  ventasDiarias: [18, 20, 15, 22, 19, 17, 21] },
   { tiendaId: 1, productoId: 2, stockActual: 25, ventasDiarias: [12, 14, 11, 15, 13, 12, 14] },
   { tiendaId: 1, productoId: 3, stockActual: 3,  ventasDiarias: [6,  8,  7,  9,  6,  7,  8]  },
@@ -84,16 +62,14 @@ const INVENTARIO = [
   { tiendaId: 1, productoId: 6, stockActual: 15, ventasDiarias: [5,  6,  4,  7,  5,  6,  5]  },
   { tiendaId: 1, productoId: 7, stockActual: 45, ventasDiarias: [20, 22, 18, 25, 21, 19, 23] },
   { tiendaId: 1, productoId: 8, stockActual: 10, ventasDiarias: [7,  9,  8,  10, 7,  8,  9]  },
-  // ── Tienda 2 ──
   { tiendaId: 2, productoId: 1, stockActual: 5,  ventasDiarias: [14, 16, 13, 17, 15, 14, 16] },
   { tiendaId: 2, productoId: 2, stockActual: 18, ventasDiarias: [10, 11, 9,  12, 10, 11, 10] },
   { tiendaId: 2, productoId: 3, stockActual: 2,  ventasDiarias: [4,  5,  4,  6,  4,  5,  4]  },
-  { tiendaId: 2, productoId: 4, stockActual: 0,  ventasDiarias: [6,  7,  6,  8,  6,  7,  7]  }, // ← Quiebre
+  { tiendaId: 2, productoId: 4, stockActual: 0,  ventasDiarias: [6,  7,  6,  8,  6,  7,  7]  },
   { tiendaId: 2, productoId: 5, stockActual: 8,  ventasDiarias: [3,  4,  3,  4,  3,  4,  3]  },
   { tiendaId: 2, productoId: 6, stockActual: 11, ventasDiarias: [3,  4,  3,  5,  3,  4,  3]  },
   { tiendaId: 2, productoId: 7, stockActual: 30, ventasDiarias: [15, 17, 14, 18, 16, 15, 17] },
   { tiendaId: 2, productoId: 8, stockActual: 6,  ventasDiarias: [5,  6,  5,  7,  5,  6,  6]  },
-  // ── Tienda 3 ──
   { tiendaId: 3, productoId: 1, stockActual: 12, ventasDiarias: [22, 24, 20, 26, 23, 21, 25] },
   { tiendaId: 3, productoId: 2, stockActual: 40, ventasDiarias: [18, 20, 16, 22, 19, 18, 20] },
   { tiendaId: 3, productoId: 3, stockActual: 7,  ventasDiarias: [8,  10, 9,  11, 8,  9,  10] },

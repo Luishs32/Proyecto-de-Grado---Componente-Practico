@@ -1,9 +1,9 @@
 'use strict';
 
-// ─────────────────────────────────────────────
-// VISTA: Gestión de Productos (CRUD)
-// RF1 – Registro de productos por tienda
-// ─────────────────────────────────────────────
+/**
+ * views/productos.js — Gestión de Productos (RF1)
+ * Proyecto de Grado · UNAD · Ingeniería de Sistemas · 2026
+ */
 
 function renderProductos() {
   const filas = PRODUCTOS.map(p => `
@@ -19,15 +19,9 @@ function renderProductos() {
       </td>
     </tr>`).join('');
 
-  const notificacion = !SUPABASE_CONFIGURED
-    ? `<div class="info-banner">⚠️ Modo demo — los cambios se guardan en memoria. Configura Supabase para persistencia real.</div>`
-    : '';
-
   return `
     <h1 class="view-title">Gestión de Productos</h1>
     <p class="view-subtitle">${PRODUCTOS.length} productos registrados en el sistema</p>
-
-    ${notificacion}
 
     <div class="card">
       <div class="card-header">
@@ -38,20 +32,15 @@ function renderProductos() {
         <table>
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Nombre del Producto</th>
-              <th>Categoría</th>
-              <th>Proveedor</th>
-              <th>Precio Unitario</th>
-              <th>Acciones</th>
+              <th>ID</th><th>Nombre del Producto</th><th>Categoría</th>
+              <th>Proveedor</th><th>Precio Unitario</th><th>Acciones</th>
             </tr>
           </thead>
-          <tbody>${filas || '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:20px">No hay productos registrados</td></tr>'}</tbody>
+          <tbody>${filas || '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:20px">Sin productos registrados</td></tr>'}</tbody>
         </table>
       </div>
     </div>
 
-    <!-- ══ MODAL PRODUCTO ══ -->
     <div id="modal-producto" class="modal-overlay hidden" onclick="cerrarModalProductoFuera(event)">
       <div class="modal-box">
         <div class="modal-header">
@@ -61,7 +50,7 @@ function renderProductos() {
         <form id="form-producto" onsubmit="guardarProducto(event)">
           <input type="hidden" id="prod-id" />
           <div class="form-group">
-            <label>Nombre del producto *</label>
+            <label>Nombre *</label>
             <input type="text" id="prod-nombre" required placeholder="Ej: Leche Entera 1L" />
           </div>
           <div class="form-row">
@@ -87,14 +76,13 @@ function renderProductos() {
     </div>`;
 }
 
-// ── Abrir modal ─────────────────────────────────────────
 function abrirModalProducto(prod = null) {
-  document.getElementById('modal-prod-titulo').textContent  = prod ? 'Editar Producto' : 'Nuevo Producto';
-  document.getElementById('prod-id').value         = prod ? prod.id        : '';
-  document.getElementById('prod-nombre').value     = prod ? prod.nombre    : '';
-  document.getElementById('prod-categoria').value  = prod ? prod.categoria : '';
-  document.getElementById('prod-proveedor').value  = prod ? prod.proveedor : '';
-  document.getElementById('prod-precio').value     = prod ? prod.precio    : '';
+  document.getElementById('modal-prod-titulo').textContent = prod ? 'Editar Producto' : 'Nuevo Producto';
+  document.getElementById('prod-id').value        = prod?.id        ?? '';
+  document.getElementById('prod-nombre').value    = prod?.nombre    ?? '';
+  document.getElementById('prod-categoria').value = prod?.categoria ?? '';
+  document.getElementById('prod-proveedor').value = prod?.proveedor ?? '';
+  document.getElementById('prod-precio').value    = prod?.precio    ?? '';
   document.getElementById('modal-producto').classList.remove('hidden');
   document.getElementById('prod-nombre').focus();
 }
@@ -107,13 +95,11 @@ function cerrarModalProductoFuera(e) {
   if (e.target.id === 'modal-producto') cerrarModalProducto();
 }
 
-// ── Editar ──────────────────────────────────────────────
 function editarProducto(id) {
   const prod = PRODUCTOS.find(p => p.id === id);
   if (prod) abrirModalProducto(prod);
 }
 
-// ── Guardar (crear o actualizar) ────────────────────────
 async function guardarProducto(e) {
   e.preventDefault();
   const btn = document.getElementById('btn-guardar-prod');
@@ -145,8 +131,7 @@ async function guardarProducto(e) {
         const idx = PRODUCTOS.findIndex(p => p.id === parseInt(id));
         if (idx !== -1) Object.assign(PRODUCTOS[idx], datos);
       } else {
-        const newId = Math.max(0, ...PRODUCTOS.map(p => p.id)) + 1;
-        PRODUCTOS.push({ id: newId, ...datos });
+        PRODUCTOS.push({ id: Math.max(0, ...PRODUCTOS.map(p => p.id)) + 1, ...datos });
       }
     }
     cerrarModalProducto();
@@ -159,11 +144,10 @@ async function guardarProducto(e) {
   }
 }
 
-// ── Eliminar ────────────────────────────────────────────
 async function eliminarProducto(id) {
   const prod = PRODUCTOS.find(p => p.id === id);
   if (!prod) return;
-  if (!confirm(`¿Eliminar "${prod.nombre}"? También se eliminarán su góndola e inventario asociados.`)) return;
+  if (!confirm(`¿Eliminar "${prod.nombre}"? Se eliminarán también su góndola e inventario asociados.`)) return;
 
   try {
     if (SUPABASE_CONFIGURED && db) {
@@ -171,7 +155,7 @@ async function eliminarProducto(id) {
       if (error) throw error;
     }
     PRODUCTOS.splice(PRODUCTOS.findIndex(p => p.id === id), 1);
-    for (let i = GONDOLA.length   - 1; i >= 0; i--) if (GONDOLA[i].productoId   === id) GONDOLA.splice(i, 1);
+    for (let i = GONDOLA.length    - 1; i >= 0; i--) if (GONDOLA[i].productoId    === id) GONDOLA.splice(i, 1);
     for (let i = INVENTARIO.length - 1; i >= 0; i--) if (INVENTARIO[i].productoId === id) INVENTARIO.splice(i, 1);
     App.render();
   } catch (err) {
