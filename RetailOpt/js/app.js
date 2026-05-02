@@ -6,30 +6,35 @@
  */
 
 const App = {
-  vistaActual:  'dashboard',
+  vistaActual:  'pedido',
   tiendaActiva: 1,
   leadTime:     3,
   filtroRiesgo: 'TODOS',
   sidebarOpen:  true,
 
-  vistas: [
-    { key: 'dashboard',  icon: '📊', label: 'Dashboard'        },
-    { key: 'tiendas',    icon: '🏪', label: 'Tiendas'          },
-    { key: 'productos',  icon: '📦', label: 'Productos'         },
+  // Módulos principales (visibles para todos los usuarios)
+  vistasPrincipal: [
+    { key: 'pedido',     icon: '📋', label: 'Pedido'            },
     { key: 'gondola',    icon: '🗄️', label: 'Config. Góndola'   },
+    { key: 'dashboard',  icon: '📊', label: 'Dashboard'         },
+    { key: 'reportes',   icon: '📊', label: 'Reportes'          },
+  ],
+
+  // Módulos de administración (visibles solo con usuario admin)
+  vistasAdmin: [
     { key: 'inventario', icon: '🏷️', label: 'Inventario'        },
-    { key: 'reposicion', icon: '🔄', label: 'Reposición'        },
-    { key: 'reportes',   icon: '📋', label: 'Reportes'          },
+    { key: 'productos',  icon: '📦', label: 'Productos'          },
+    { key: 'tiendas',    icon: '🏪', label: 'Tiendas'           },
   ],
 
   renderMap: {
-    dashboard:  renderDashboard,
-    tiendas:    renderTiendas,
-    productos:  renderProductos,
+    pedido:     renderPedido,
     gondola:    renderGondola,
-    inventario: renderInventario,
-    reposicion: renderReposicion,
+    dashboard:  renderDashboard,
     reportes:   renderReportes,
+    inventario: renderInventario,
+    productos:  renderProductos,
+    tiendas:    renderTiendas,
   },
 
   goto(key) {
@@ -76,34 +81,65 @@ const App = {
   },
 
   renderNav() {
-    const alertas = this.contarAlertas();
-    const navEl   = document.getElementById('sidebar-nav');
+    const session  = getSession();
+    const alertas  = this.contarAlertas();
+    const navEl    = document.getElementById('sidebar-nav');
     if (!navEl) return;
 
-    navEl.innerHTML = this.vistas.map(v => {
-      const badge   = (v.key === 'dashboard' && alertas > 0) ? `<span class="nav-badge">${alertas}</span>` : '';
-      const label   = this.sidebarOpen ? `<span>${v.label}</span>${badge}` : '';
+    const buildItem = v => {
+      const badge = (v.key === 'pedido' && alertas > 0)
+        ? `<span class="nav-badge">${alertas}</span>` : '';
+      const label = this.sidebarOpen ? `<span>${v.label}</span>${badge}` : '';
       return `
         <button class="nav-item ${this.vistaActual === v.key ? 'active' : ''}"
                 onclick="App.goto('${v.key}')" title="${v.label}">
           <span class="nav-icon">${v.icon}</span>${label}
         </button>`;
-    }).join('');
+    };
+
+    // Sección admin (solo visible para admin o si sidebarOpen)
+    const adminSection = esAdmin() ? `
+      ${this.sidebarOpen ? '<p class="nav-section-title">Administración</p>' : '<hr class="nav-divider">'}
+      ${this.vistasAdmin.map(buildItem).join('')}` : '';
+
+    // Botón cerrar sesión
+    const logoutLabel = this.sidebarOpen ? '<span>Cerrar Sesión</span>' : '';
+    const logoutBtn = `
+      <button class="nav-item nav-logout" onclick="App.logout()" title="Cerrar sesión">
+        <span class="nav-icon">🚪</span>${logoutLabel}
+      </button>`;
+
+    navEl.innerHTML = this.vistasPrincipal.map(buildItem).join('') + adminSection + logoutBtn;
+
+    // Info del usuario en el logo
+    const logoText = document.getElementById('logo-text');
+    if (logoText && session) {
+      logoText.innerHTML = `
+        <p>RetailOpt</p>
+        <span class="sidebar-user">${session.nombre}</span>`;
+    }
   },
 
   renderTopbar() {
-    const vista   = this.vistas.find(v => v.key === this.vistaActual);
+    const todas  = [...this.vistasPrincipal, ...this.vistasAdmin];
+    const vista  = todas.find(v => v.key === this.vistaActual);
     const alertas = this.contarAlertas();
     const titleEl = document.getElementById('topbar-title');
     const pillEl  = document.getElementById('alert-pill');
+    const avatarEl = document.getElementById('user-avatar');
+    const session  = getSession();
 
-    if (titleEl) titleEl.textContent = `${vista?.icon || ''} ${vista?.label || ''}`;
+    if (titleEl) titleEl.textContent = `${vista?.icon ?? ''} ${vista?.label ?? ''}`;
+    if (avatarEl && session) {
+      avatarEl.textContent = session.usuario.slice(0, 2).toUpperCase();
+      avatarEl.title = session.nombre;
+    }
 
     if (pillEl) {
       if (alertas > 0) {
-        pillEl.textContent = `⚠️ ${alertas} alerta${alertas > 1 ? 's' : ''} activa${alertas > 1 ? 's' : ''}`;
+        pillEl.textContent = `⚠️ ${alertas} alerta${alertas > 1 ? 's' : ''}`;
         pillEl.classList.remove('hidden');
-        pillEl.onclick = () => this.goto('dashboard');
+        pillEl.onclick = () => this.goto('pedido');
       } else {
         pillEl.classList.add('hidden');
       }
@@ -116,6 +152,33 @@ const App = {
     const contentEl = document.getElementById('content');
     const renderFn  = this.renderMap[this.vistaActual];
     if (contentEl && renderFn) contentEl.innerHTML = renderFn();
+  },
+
+  // Muestra el layout completo (sidebar + topbar)
+  arrancar() {
+    document.getElementById('app').classList.remove('hidden');
+    document.getElementById('login-container')?.remove();
+    this.render();
+  },
+
+  // Muestra pantalla de login (oculta el layout principal)
+  mostrarLogin(error = '') {
+    document.getElementById('app').classList.add('hidden');
+    let container = document.getElementById('login-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'login-container';
+      document.body.appendChild(container);
+    }
+    container.innerHTML = renderLogin(error);
+    document.getElementById('login-usuario')?.focus();
+  },
+
+  logout() {
+    clearSession();
+    this.filtroRiesgo = 'TODOS';
+    this.vistaActual  = 'pedido';
+    this.mostrarLogin();
   },
 
   async cargarDatos() {
@@ -155,8 +218,6 @@ const App = {
         stockActual: r.stock_actual,
         ventasDiarias: r.ventas_diarias || [0, 0, 0, 0, 0, 0, 0],
       }));
-
-      if (TIENDAS.length > 0) this.tiendaActiva = TIENDAS[0].id;
     } catch (err) {
       console.error('[RetailOpt] Error al cargar datos:', err.message);
     }
@@ -167,17 +228,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   const toggleBtn = document.getElementById('sidebar-toggle');
   if (toggleBtn) toggleBtn.addEventListener('click', () => App.toggleSidebar());
 
+  // Cargar datos de Supabase si está configurado
   if (SUPABASE_CONFIGURED) {
     const contentEl = document.getElementById('content');
-    if (contentEl) {
-      contentEl.innerHTML = `
-        <div class="loading-state">
-          <div class="spinner"></div>
-          <p>Cargando datos…</p>
-        </div>`;
-    }
+    if (contentEl) contentEl.innerHTML = `
+      <div class="loading-state"><div class="spinner"></div><p>Cargando datos…</p></div>`;
     await App.cargarDatos();
   }
 
-  App.render();
+  const session = getSession();
+  if (session) {
+    if (session.tiendaId !== null) App.tiendaActiva = session.tiendaId;
+    App.arrancar();
+  } else {
+    App.mostrarLogin();
+  }
 });

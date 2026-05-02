@@ -8,10 +8,9 @@
 </head>
 <body>
 
-  <!-- Overlay para cerrar sidebar en móvil -->
   <div class="sidebar-overlay" id="sidebar-overlay" onclick="App.closeMobileSidebar()"></div>
 
-  <div class="app" id="app">
+  <div class="app hidden" id="app">
 
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-logo">
@@ -32,10 +31,10 @@
     <div class="main-area">
       <header class="topbar">
         <button class="btn-hamburger" id="btn-hamburger" onclick="App.toggleMobileSidebar()" title="Menú">☰</button>
-        <span class="topbar-title" id="topbar-title">📊 Dashboard</span>
+        <span class="topbar-title" id="topbar-title">📋 Pedido</span>
         <div class="topbar-right">
           <button class="alert-pill hidden" id="alert-pill">⚠️ 0 alertas</button>
-          <div class="user-avatar">RO</div>
+          <div class="user-avatar" id="user-avatar">RO</div>
         </div>
       </header>
       <main class="content" id="content"></main>
@@ -45,8 +44,11 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="js/supabase-client.js"></script>
+  <script src="js/auth.js"></script>
   <script src="js/data.js"></script>
   <script src="js/algoritmo.js"></script>
+  <script src="js/views/login.js"></script>
+  <script src="js/views/pedido.js"></script>
   <script src="js/views/dashboard.js"></script>
   <script src="js/views/tiendas.js"></script>
   <script src="js/views/productos.js"></script>
