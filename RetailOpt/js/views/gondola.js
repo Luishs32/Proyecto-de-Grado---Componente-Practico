@@ -60,10 +60,9 @@ function renderGondola() {
     <div class="card">
       <div class="card-header">
         <span class="ch-title">🗄️ ${tienda?.nombre ?? ''}</span>
-        <button class="btn-primary" onclick="abrirModalGondolaNuevo()"
-          ${prodDisponibles.length === 0 ? 'disabled title="Todos los productos tienen configuración asignada"' : ''}>
-          + Nueva Config.
-        </button>
+        ${prodDisponibles.length > 0
+          ? `<button class="btn-primary" onclick="abrirModalGondolaNuevo()">+ Nueva Config.</button>`
+          : `<span class="ch-meta" style="color:#16a34a;font-weight:600">✅ Todos los productos están configurados</span>`}
       </div>
       <div class="table-wrap">
         <table>
