@@ -69,10 +69,7 @@ function renderPedido() {
 
   return `
     <h1 class="view-title">Pedido Sugerido</h1>
-    <p class="view-subtitle">
-      🏪 ${tienda?.nombre ?? '—'} &nbsp;·&nbsp;
-      Algoritmo basado en capacidad de exhibición en góndola
-    </p>
+    <p class="view-subtitle">🏪 ${tienda?.nombre ?? '—'}</p>
 
     <div class="tab-row">
       ${tabTiendas}

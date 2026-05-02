@@ -10,15 +10,22 @@
  */
 
 function renderGondola() {
+  // Usuarios de tienda solo ven y editan su propia tienda
+  const session  = getSession();
+  if (!esAdmin() && session?.tiendaId !== null) {
+    App.tiendaActiva = session.tiendaId;
+  }
+
   const tiendaId = App.tiendaActiva;
   const tienda   = TIENDAS.find(t => t.id === tiendaId);
   const gondolas = GONDOLA.filter(g => g.tiendaId === tiendaId);
 
-  const tabs = TIENDAS.map(t => `
+  // Tabs de tienda solo visibles para el administrador general
+  const tabs = esAdmin() ? TIENDAS.map(t => `
     <button class="tab-btn ${t.id === tiendaId ? 'active' : ''}"
             onclick="App.tiendaActiva=${t.id}; App.render()">
       🏪 ${t.nombre}
-    </button>`).join('');
+    </button>`).join('') : '';
 
   const filas = gondolas.map(g => {
     const producto = PRODUCTOS.find(p => p.id === g.productoId);
