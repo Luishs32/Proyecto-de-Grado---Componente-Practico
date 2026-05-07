@@ -49,6 +49,10 @@ function renderLogin(error = '') {
               <span class="login-tienda">🏪 Tienda Cuba</span>
               <code>cuba</code> / <code>cuba123</code>
             </div>
+            <div class="login-hint-row">
+              <span class="login-tienda">🔑 Administrador</span>
+              <code>admin</code> / <code>admin2026</code>
+            </div>
           </div>
         </div>
 
