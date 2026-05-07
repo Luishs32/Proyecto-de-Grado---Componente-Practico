@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RetailOpt — Sistema de Optimización de Reposición</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="App.closeMobileSidebar()"></div>
+
+  <div class="app hidden" id="app">
+
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-icon">🛒</div>
+        <div class="logo-text" id="logo-text">
+          <p>RetailOpt</p>
+          <span>Sistema de Reposición</span>
+        </div>
+        <button class="sidebar-toggle" id="sidebar-toggle" title="Colapsar menú">◀</button>
+      </div>
+      <nav class="sidebar-nav" id="sidebar-nav"></nav>
+      <div class="sidebar-footer" id="sidebar-footer">
+        <p><strong>UNAD – Ing. Sistemas</strong><br>Proyecto de Grado 2026<br>
+        <span class="trl-badge">TRL 5 – Prototipo Funcional</span></p>
+      </div>
+    </aside>
+
+    <div class="main-area">
+      <header class="topbar">
+        <button class="btn-hamburger" id="btn-hamburger" onclick="App.toggleMobileSidebar()" title="Menú">☰</button>
+        <span class="topbar-title" id="topbar-title">📋 Pedido</span>
+        <div class="topbar-right">
+          <button class="alert-pill hidden" id="alert-pill">⚠️ 0 alertas</button>
+          <div class="user-avatar" id="user-avatar">RO</div>
+        </div>
+      </header>
+      <main class="content" id="content"></main>
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="js/supabase-client.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/algoritmo.js"></script>
+  <script src="js/views/login.js"></script>
+  <script src="js/views/pedido.js"></script>
+  <script src="js/views/dashboard.js"></script>
+  <script src="js/views/tiendas.js"></script>
+  <script src="js/views/productos.js"></script>
+  <script src="js/views/gondola.js"></script>
+  <script src="js/views/inventario.js"></script>
+  <script src="js/views/reposicion.js"></script>
+  <script src="js/views/reportes.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
