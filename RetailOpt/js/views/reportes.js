@@ -8,14 +8,22 @@
  */
 
 function renderReportes() {
-  const todos    = calcularTodos(App.leadTime);
+  const session  = getSession();
+  const admin    = esAdmin();
+  const tiendaId = session?.tiendaId;
+
+  const todosGlobal = calcularTodos(App.leadTime);
+  const todos       = admin ? todosGlobal : todosGlobal.filter(c => c.tiendaId === tiendaId);
+
   const quiebres = todos.filter(c => c.resultado.nivelRiesgo === 'QUIEBRE');
   const totalVal = todos.reduce((s, c) => s + (c.resultado.cantidadSugerida * c.producto.precio), 0);
-  const segPct   = Math.round(
-    (todos.filter(c => ['BAJO', 'MEDIO'].includes(c.resultado.nivelRiesgo)).length / todos.length) * 100
-  );
+  const segPct   = todos.length > 0
+    ? Math.round((todos.filter(c => ['BAJO', 'MEDIO'].includes(c.resultado.nivelRiesgo)).length / todos.length) * 100)
+    : 0;
 
-  const porTienda = TIENDAS.map(t => {
+  const tiendasVista = admin ? TIENDAS : TIENDAS.filter(t => t.id === tiendaId);
+
+  const porTienda = tiendasVista.map(t => {
     const tc = todos.filter(c => c.tiendaId === t.id);
     return {
       tienda:     t,
@@ -40,10 +48,23 @@ function renderReportes() {
       <td style="font-weight:600">$${r.valorPed.toLocaleString()}</td>
     </tr>`).join('');
 
+  const filaTotalGeneral = admin ? `
+    <tr class="total-row">
+      <td>TOTAL GENERAL</td>
+      <td>${totalStk}</td>
+      <td style="color:#dc2626">${quiebres.length}</td>
+      <td style="color:#2563eb">${totalPed} unid.</td>
+      <td>$${totalVal.toLocaleString()}</td>
+    </tr>` : '';
+
+  const tituloResumen = admin
+    ? '📊 Resumen consolidado por tienda'
+    : `📊 Reporte — ${tiendasVista[0]?.nombre ?? ''}`;
+
   const resumenCard = `
     <div class="card">
       <div class="card-header">
-        <span class="ch-title">📊 Resumen consolidado por tienda</span>
+        <span class="ch-title">${tituloResumen}</span>
         <span class="ch-meta">RF7 – Reporte de quiebres de stock</span>
       </div>
       <div class="table-wrap">
@@ -56,13 +77,7 @@ function renderReportes() {
           </thead>
           <tbody>
             ${filasResumen}
-            <tr class="total-row">
-              <td>TOTAL GENERAL</td>
-              <td>${totalStk}</td>
-              <td style="color:#dc2626">${quiebres.length}</td>
-              <td style="color:#2563eb">${totalPed} unid.</td>
-              <td>$${totalVal.toLocaleString()}</td>
-            </tr>
+            ${filaTotalGeneral}
           </tbody>
         </table>
       </div>
@@ -108,9 +123,13 @@ function renderReportes() {
       </div>
     </div>`;
 
+  const subtitulo = admin
+    ? 'Análisis de quiebres de stock, pedidos sugeridos e indicadores de impacto'
+    : `Análisis de quiebres de stock e indicadores de impacto · ${tiendasVista[0]?.nombre ?? ''}`;
+
   return `
     <h1 class="view-title">Reportes del Sistema</h1>
-    <p class="view-subtitle">Análisis de quiebres de stock, pedidos sugeridos e indicadores de impacto</p>
+    <p class="view-subtitle">${subtitulo}</p>
     ${resumenCard}
     ${quiebresCard}
     ${impactCard}`;
